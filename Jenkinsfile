@@ -35,13 +35,10 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    withCredentials([string(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_CONTENT')]) {
-                        // Write kubeconfig content to file on agent
-                        writeFile file: 'kubeconfig', text: KUBECONFIG_CONTENT
-                        // Set KUBECONFIG env variable so kubectl uses this file
-                        env.KUBECONFIG = "${pwd()}/kubeconfig"
-
+                    withCredentials([string(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_B64')]) {
                         sh """
+                            echo "$KUBECONFIG_B64" | base64 -d > kubeconfig
+                            export KUBECONFIG=\$(pwd)/kubeconfig
                             kubectl set image deployment/trial samimmondal=${DOCKER_IMAGE}:${IMAGE_TAG} --namespace=default
                         """
                     }
