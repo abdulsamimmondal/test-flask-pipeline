@@ -25,7 +25,10 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-cred') {
+                        // Push with versioned tag
                         docker.image("${DOCKER_IMAGE}:${IMAGE_TAG}").push()
+                        // Optionally push latest
+                        docker.image("${DOCKER_IMAGE}:${IMAGE_TAG}").push("latest")
                     }
                 }
             }
@@ -34,10 +37,9 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    // This assumes kubectl is configured on the Jenkins agent
                     sh """
-                    kubectl set image deployment/sm-deploy \
-                      sm-deploy=${DOCKER_IMAGE}:${IMAGE_TAG} \
+                    kubectl set image deployment/trial \
+                      samimmondal=${DOCKER_IMAGE}:${IMAGE_TAG} \
                       --namespace=default
                     """
                 }
@@ -50,7 +52,7 @@ pipeline {
             echo "✅ Deployment succeeded!"
         }
         failure {
-            echo "❌ Something went wrong."
+            echo "❌ Deployment failed."
         }
     }
 }
